@@ -1,21 +1,32 @@
 bits 16
-org 0x7c00 ;direccion donde va a hacer el load 
+org 0x7C00
 
-mov si, 0
+mov [BOOT_DRIVE], dl ; BIOS pone el disco en DL
 
-;funcion que va a hacer cuando cargue 
-print:
-    mov ah, 0x0e
-    mov al, [hello + si]
-    int 0x10
-    add si, 1
-    cmp byte [hello + si],0
-    jne print
+mov bx, 0x1000       ; donde cargar el programa
+mov dh, 1            ; cuantos sectores leer
 
-jmp $
+call disk_load
 
-hello:
-    db "hello, world!", 0 
+jmp 0x1000           ; saltar al game
 
-times 510 - ($ - $$) db 0
+;-----------------------
+disk_load:
+    mov ah, 0x02     ; funcion leer sectores
+    mov al, dh       ; cantidad de sectores
+    mov ch, 0x00     ; cilindro
+    mov dh, 0x00     ; cabeza
+    mov cl, 0x02     ; sector (1 es bootloader)
+    mov dl, [BOOT_DRIVE]
+
+    int 0x13
+    jc disk_error
+    ret
+
+disk_error:
+    jmp $
+
+BOOT_DRIVE db 0
+
+times 510-($-$$) db 0
 dw 0xAA55
