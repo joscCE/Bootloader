@@ -1,8 +1,17 @@
 bits 16
 org 0x1000
 
-mov dl, 23 ;columna
-mov dh, 12 ;row
+Ramdom:
+    mov ah, 00h ;interrupcion para tomar el system time
+    int 1AH ; [CX:DX] en ese rango esta la cantidad del ticks desde media noche
+    mov ax, DX
+    xor dx,dx
+    mov cx, 21 ;divisor
+    div cx ;el residuo entre 0-20 queda en dx
+    add dx, 10 ;ahora queda entre 10-30
+
+mov dl, dl ;columna
+mov dh, dl ;row
 
 mov si, message ;un pointer al mensaje
 
@@ -27,10 +36,3 @@ done:
 message db "uwu",0 ;variable guardada en memoria
 
 
-Ramdom:
-    mov ah, 00h ;interrupcion para tomar el system time
-    int 1AH ; [CX:DX] en ese rango esta la cantidad del ticks desde media noche
-    mov ax, DX
-    xor dx,dx
-    mov cx, 10
-    div cx ;aqui va a estar el  residuo de la division - de 0 a 9
