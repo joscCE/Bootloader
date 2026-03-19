@@ -46,7 +46,7 @@ random_pos:
     mov [start_row], dh     ; guardar fila inicial
 
     mov si, message         ; puntero al mensaje
-    jmp print_horizontal
+    jmp print_up
 
 ; esperar tecla
 wait_key:
@@ -63,10 +63,10 @@ wait_key:
     je print_right
 
     cmp ah, 48h             ;flecha arriba: rota 180 grados hacia abajo sobre eje x
-    je print_horizontal
+    je print_up
     
     cmp ah, 50h             ;flecha abajo: rota 180 grados hacia arriba sobre eje c
-    ;je print
+    je print_down
 
     jmp wait_key
 
@@ -83,33 +83,41 @@ start_print:
     mov dh, [start_row]  
     ret     
 
-print_horizontal:
+print_up:
     call start_print
-ph_loop:
+pu_loop:
     call set_cursor
     mov ah, 0x0E            ;la verdad nose, igual no es importante uwu
     lodsb                   ;agarra un byte de message lo carga y suma 1
     cmp al, 0               ;se terminaron las letras?
     je wait_key             ;vaya a done si se terminaron las letras
     int 0x10                ;interrupcion de video
-    ;inc dh                 ;incrementa el row (comentado por ahora para q sea horizontal)
-    inc dl                  ;incrementa el column
-    jmp ph_loop             ;set el curson con la nueva posicion
+    inc dl                  ;incrementa el col para imprimir normal
+    jmp pu_loop             
 
-
+print_down:
+    call start_print
+pd_loop:
+    call set_cursor
+    mov ah, 0x0E
+    lodsb                   ;cargar el siguiente byte del mensaje
+    cmp al, 0               ;si se termino el mensaje
+    je wait_key             ;esperar otra tecla
+    mov ah, 0x0E            ;imprimir el caracter
+    int 0x10                ;int video
+    dec dl                  ;decrementa el col para imprimir hacia atras
+    jmp pd_loop             
 
 print_right:
     call start_print
 pr_loop:
     call set_cursor
-
+    mov ah, 0x0E
     lodsb                   ;cargar el siguiente byte del mensaje
     cmp al, 0               ;si se termino el mensaje
     je wait_key             ;esperar otra tecla
-
-    mov ah, 0Eh             ;imprimir el caracter
+    mov ah, 0x0E            ;imprimir el caracter
     int 0x10                ;int video
-
     inc dh                  ;incrementa el row para imprimir hacia abajo
     jmp pr_loop  
 
@@ -117,15 +125,13 @@ print_left:
     call start_print
 pl_loop:
     call set_cursor
-
-    lodsb
-    cmp al, 0
-    je wait_key
-
-    mov ah, 0Eh
-    int 10h
-
-    dec dh                  ; sube desde la 'o'
+    mov ah, 0x0E
+    lodsb                   ;cargar el siguiente byte del mensaje
+    cmp al, 0               ;si se termino el mensaje
+    je wait_key             ;esperar otra tecla
+    mov ah, 0x0E            ;imprimir el caracter
+    int 0x10                ;int video
+    dec dh                  ;decrementa el row para imprimir hacia arriba
     jmp pl_loop
 
 done:
