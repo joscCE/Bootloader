@@ -5,6 +5,13 @@ org 0x1000
 ; Inicio de programa
 ;==========================
 start:
+    call clear_screen      ; limpiar pantalla
+
+    mov dh, 0              ; row 0
+    mov dl, 0              ; col 0
+
+    call set_cursor
+
     mov si, prompt         ; mensaje de bienvenida
 
 ; print del mensaje de bienvenida
@@ -30,6 +37,30 @@ wait_enter:
     call clear_screen       ; limpiar ventana
 
 ;==========================
+; Generar random name
+;==========================
+random_name:
+    mov ah, 00h             ; interrupcion para tomar el system time
+    int 1Ah                 ; [CX:DX] = ticks desde media noche
+    mov ax, dx
+    xor dx, dx
+    mov cx, 2               ; divisor
+    div cx                  ; residuo es 0 o 1, queda en DX 
+     
+    cmp dx, 0               
+    je select_name0         ; si es 0, esoger name0
+
+    mov si, name1
+    jmp save_name_ptr       ; si es 1, escoger name1
+
+select_name0:
+    mov si, name0
+
+save_name_ptr:
+    mov [selected_name], si
+
+
+;==========================
 ; Generar random pos
 ;==========================
 random_pos:
@@ -38,25 +69,24 @@ random_pos:
     int 1Ah                 ; [CX:DX] = ticks desde media noche
     mov ax, dx
     xor dx, dx
-    mov cx, 68              ; divisor
-    div cx                  ; residuo entre 0..67 queda en DX
-    add dl, 6               ; ahora queda entre 6..73
+    mov cx, 72              ; divisor
+    div cx                  ; residuo entre 0..71 queda en DX 
+    add dl, 4               ; ahora queda entre 4..75
     mov [start_col], dl     ; guardar columna inicial
     ;random fila
     mov ah, 00h             ; interrupcion para tomar el system time
     int 1Ah
     mov ax, dx
     xor dx, dx
-    mov cx, 13              ; divisor
-    div cx                  ; residuo entre 0..12 queda en DX
-    add dl, 6               ; ahora queda entre 6..18
+    mov cx, 15              ; divisor
+    div cx                  ; residuo entre 0..14 queda en DX
+    add dl, 4               ; ahora queda entre 4..18
     ;guardar pos inicial
     mov dh, dl              ; fila
     mov dl, [start_col]     ; columna
     mov [start_row], dh     ; guardar fila inicial
 
-    mov si, message         ; puntero al mensaje
-    jmp print_up
+    jmp print_up            ; print horizontal normal por default
 
 ;==============================
 ; Esperar tecla, loop principal
@@ -66,6 +96,9 @@ wait_key:
     int 16h                 ; interrupcion de tecla
 
     cmp al, 1Bh             ; tecla esc
+    je reset
+
+    cmp al, 08h             ; tecla backspace
     je start
 
     cmp ah, 4Bh             ; flecha izquierda
@@ -82,6 +115,10 @@ wait_key:
 
     jmp wait_key            ; esperar otra tecla
 
+reset:
+    int 19h
+
+
 ;==========================
 ; Aux para prints
 ;==========================
@@ -92,7 +129,7 @@ set_cursor:
     ret
 start_print:   
     call clear_screen       ; limpiar pantalla
-    mov si, message         ; puntero al mensaje
+    mov si, [selected_name] ; puntero al mensaje
     mov dl, [start_col]     ; cargar col inicial
     mov dh, [start_row]     ; cargar row inicial
     ret     
@@ -156,7 +193,9 @@ pl_loop:
     dec dh                  ; decrementa el row para imprimir hacia arriba
     jmp pl_loop
 
-;limpiar todo el screen
+;==========================
+; Limpiar la pantalla
+;==========================
 clear_screen:
     mov ax, 0600h           ; scroll up toda la pantalla
     mov bh, 07h             ; color de fondo y texto
@@ -165,13 +204,10 @@ clear_screen:
     int 10h                 ; int video
     ret  
 
-;loop infinito
-done:
-    jmp $
-
-
 ;variables guardadas en memoria
-prompt db "dar enter para empezar", 0
-message db "onichan",0      
+prompt db "Presione enter para empezar", 0
+name0 db "jimmy", 0      
+name1 db "jose", 0
+selected_name dw 0  
 start_col db 0
 start_row db 0
