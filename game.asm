@@ -96,7 +96,7 @@ wait_key:
     int 16h                 ; interrupcion de tecla
 
     cmp al, 1Bh             ; tecla esc
-    je reset
+    je done
 
     cmp al, 08h             ; tecla backspace
     je start
@@ -115,7 +115,7 @@ wait_key:
 
     jmp wait_key            ; esperar otra tecla
 
-reset:
+done:
     int 19h
 
 
