@@ -1,0 +1,19 @@
+clang -target x86_64-pc-win32 \
+  -I/usr/include/efi \
+  -I/usr/include/efi/x86_64 \
+  -ffreestanding -fshort-wchar \
+  -mno-red-zone \
+  -c bootuefi.c -o bootuefi.o
+
+
+lld-link \
+  /subsystem:efi_application \
+  /entry:efi_main \
+  bootuefi.o \
+  /out:BOOTX64.EFI
+
+
+
+  qemu-system-x86_64 \
+  -bios /usr/share/OVMF/OVMF_CODE.fd \
+  -drive format=raw,file=fat:rw:esp
