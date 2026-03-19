@@ -33,9 +33,9 @@ random_pos:
     mov dh, dl              ;row
     mov si, message         ;un pointer al mensaje
 
-    ; guardar posicion inicial
-    mov [start_col], dl
-    mov [start_row], dh
+    
+    mov [start_col], dl     ;guardar col inicial
+    mov [start_row], dh     ;guardar row inicial
     jmp set_cursor
 
 set_cursor:
@@ -43,8 +43,8 @@ set_cursor:
     mov ah, 02h             ;poner el cursor en la posicion
     int 0x10                ;interrupcion de video
 
-print:
-    mov ah, 0x0E            ;la verdad nose, igual no es importante
+print_horizontal:
+    mov ah, 0x0E            ;la verdad nose, igual no es importante uwu
     lodsb                   ;agarra un byte de message lo carga y suma 1
     cmp al, 0               ;se terminaron las letras?
     je wait_key             ;vaya a done si se terminaron las letras
@@ -59,24 +59,60 @@ wait_key:
     mov ah, 00h
     int 16h                 ;interrupcion de tecla
 
-    cmp ah, 4Bh             ;flecha izquierda
-    je print                
+    cmp al, 1Bh             ;tecla esc
+    je done
 
-    cmp ah, 4Dh             ;flecha derecha
-    je print
+    cmp ah, 4Bh             ;flecha izquierda: rota 90 grados hacia izquierda sobre eje y
+    ;je print_right               
 
-    cmp ah, 48h             ;flecha arriba
-    je print
+    cmp ah, 4Dh             ;flecha derecha: rota 90 grados hacia derecha sobre eje y
+    je print_right
+
+    cmp ah, 48h             ;flecha arriba: rota 180 grados hacia abajo sobre eje x
+    ;je print
     
-    cmp ah, 50h             ;flecha abajo
-    je print
+    cmp ah, 50h             ;flecha abajo: rota 180 grados hacia arriba sobre eje c
+    ;je print
 
     jmp wait_key
+
+print_right:
+    call clear_screen       ;limpiar todo
+    mov si, message         ;puntero al mensaje
+    mov dl, [start_col]     ;cargar col inicial
+    mov dh, [start_row]     ;cargar row inicial
+
+pr_loop:
+    mov bh, 0               ;display page
+    mov ah, 02h             ;cursor en pos
+    int 0x10                ;int video
+
+    lodsb                   ;cargar el siguiente byte del mensaje
+    cmp al, 0               ;si se termino el mensaje
+    je wait_key             ;esperar otra tecla
+
+    mov ah, 0Eh             ;imprimir el caracter
+    int 0x10                ;int video
+
+    inc dh                  ;incrementa el row para imprimir hacia abajo
+    jmp pr_loop            
 
 done:
     jmp $
 
+
+clear_screen:
+    mov ax, 0600h           ;scroll up toda la pantalla
+    mov bh, 07h             ;color de fondo y texto
+    mov cx, 0000h           ;esquina superior izquierda
+    mov dx, 184Fh           ;esquina inferior derecha (24 filas, 80 columnas)
+    int 10h                 ;int video
+    ret
+
+;variables guardadas en memoria
 prompt    db "dar enter para empezar", 0
-message db "onichan",0          ;variable guardada en memoria
+message db "onichan",0          
 start_col db 0
 start_row db 0
+step_col  db 0
+step_row  db 0
