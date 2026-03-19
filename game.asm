@@ -20,22 +20,41 @@ wait_enter:
     cmp al, 0Dh             ; tecla enter
     jne wait_enter
 
+    call clear_screen       ; limpiar ventana
+
 random_pos:
+
+    ; random para columna: 6..73
     mov ah, 00h             ;interrupcion para tomar el system time
     int 1AH                 ;[CX:DX] en ese rango esta la cantidad del ticks desde media noche
-    mov ax, DX
-    xor dx,dx
-    mov cx, 21              ;divisor
-    div cx                  ;el residuo entre 0-20 queda en dx
-    add dx, 10              ;ahora queda entre 10-30
     
-    mov dl, dl              ;columna
-    mov dh, dl              ;row
-    mov si, message         ;un pointer al mensaje
+    mov ax, dx              ;dx como semilla
+    xor dx, dx
+    mov cx, 68              ;0..67 
+    div cx                  ;residuo
 
-    
+    xchg ax, dx             ;mover residuo a ax
+    mov dl, al              ;usar al como columna base
+    add dl, 6               ;ajustar rango 6..73
+
     mov [start_col], dl     ;guardar col inicial
+
+    ; random para fila: 6..18
+    mov ah, 00h          
+    int 1AH
+
+    mov ax, dx
+    xor dx, dx
+    mov cx, 13              ;0..12
+    div cx                  ;residuo
+
+    xchg ax, dx             
+    mov dh, al              ;usar al como fila base
+    add dh, 6               ;ajustar rango 6..18
+
     mov [start_row], dh     ;guardar row inicial
+
+    mov si, message         ;un pointer al mensaje
     jmp set_cursor
 
 set_cursor:
