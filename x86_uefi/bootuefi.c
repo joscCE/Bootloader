@@ -2,6 +2,7 @@
 
 
 
+//protocolos
 
 EFI_GUID gEfiLoadedImageProtocolGuid = 
     {0x5B1B31A1,0x9562,0x11d2,{0x8E,0x3F,0x00,0xA0,0xC9,0x69,0x72,0x3B}};
@@ -13,9 +14,11 @@ EFI_GUID gEfiFileInfoGuid =
     {0x09576e92,0x6d3f,0x11d2,{0x8E,0x39,0x00,0xA0,0xC9,0x69,0x72,0x3B}};
 
 
+//funcion principal, recibe el identificador de la imagen y la tabla de servios 
+
 EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 
-    SystemTable->ConOut->OutputString(
+    SystemTable->ConOut->OutputString( //imprimimos en la termiaal
         SystemTable->ConOut,
         L"UEFI OK\r\n"
     );
@@ -27,7 +30,7 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
     EFI_FILE_PROTOCOL *Root;
     EFI_FILE_PROTOCOL *File;
 
-    // 1. Obtener LoadedImage
+    // Obtenemos la loadimage
     status = SystemTable->BootServices->HandleProtocol(
         ImageHandle,
         &gEfiLoadedImageProtocolGuid,
@@ -36,7 +39,7 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
 
     if (EFI_ERROR(status)) return status;
 
-    // 2. Obtener filesystem
+    //protocolo para acceder al sistema de archivos
     status = SystemTable->BootServices->HandleProtocol(
         LoadedImage->DeviceHandle,
         &gEfiSimpleFileSystemProtocolGuid,
@@ -45,11 +48,11 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
 
     if (EFI_ERROR(status)) return status;
 
-    // 3. Abrir volumen
+    //abrimos la raiz de los archivos
     status = FileSystem->OpenVolume(FileSystem, &Root);
     if (EFI_ERROR(status)) return status;
 
-    // 4. Abrir game.efi
+    //abrimos el game.efi
     status = Root->Open(
         Root,
         &File,
@@ -58,15 +61,17 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
         0
     );
 
+    //si no se encontro el archivo
     if (EFI_ERROR(status)) {
         SystemTable->ConOut->OutputString(SystemTable->ConOut, L"No se encontro game.efi\r\n");
         while (1);
     }
 
-    // 5. Obtener tamaño del archivo
+    // obtenemos el tamano del archivo para leerlo completo
     EFI_FILE_INFO *FileInfo;
     UINTN FileInfoSize = sizeof(EFI_FILE_INFO) + 200;
 
+    //reservamos la memoria
     SystemTable->BootServices->AllocatePool(
         EfiLoaderData,
         FileInfoSize,
@@ -82,7 +87,7 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
 
     UINTN FileSize = FileInfo->FileSize;
 
-    // 6. Leer archivo a memoria
+    //leemos el archivo a memoria
     void *Buffer;
     SystemTable->BootServices->AllocatePool(
         EfiLoaderData,
@@ -92,7 +97,7 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
 
     File->Read(File, &FileSize, Buffer);
 
-    // 7. Cargar imagen desde memoria
+    //CArgamos la imagen a memoria
     EFI_HANDLE GameImage;
 
     status = SystemTable->BootServices->LoadImage(
@@ -109,7 +114,7 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
         while (1);
     }
 
-    // 8. Ejecutar
+    // Ejecutamos el game
     status = SystemTable->BootServices->StartImage(
         GameImage,
         NULL,
