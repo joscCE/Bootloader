@@ -36,6 +36,9 @@ lld-link \
   /out:game.efi
 
 -----------------------------------------------------------
+
+para ejecutar en quemu hay que estar ubicado en /BOOTLOADER/x86_uefi
+
   qemu-system-x86_64 \
   -bios /usr/share/OVMF/OVMF_CODE.fd \
   -drive format=raw,file=fat:rw:esp
@@ -45,15 +48,17 @@ para quemar la llave malla
 
 lsblk -f //para ver el dev de la llave malla, normalmente sda1
 
-entonces
+ademas hay que estar ubicado en /BOOTLOADER
+
+entonces:
 
 sudo mount /dev/sda1 /mnt
 
 sudo mkdir -p /mnt/EFI/BOOT
 
-sudo cp /Documents/materias/Sistemas_Operativos/Tareas/Bootloader/esp/EFI/BOOT/BOOTX64.EFI /mnt/EFI/BOOT/
+sudo cp x86_uefi/esp/EFI/BOOT/BOOTX64.EFI /mnt/EFI/BOOT/
 
-sudo cp /Documents/materias/Sistemas_Operativos/Tareas/Bootloader/esp/EFI/BOOT/game.efi /mnt/EFI/BOOT/
+sudo cp x86_uefi/esp/EFI/BOOT/game.efi /mnt/EFI/BOOT/
 
 sudo umount /mnt
 
