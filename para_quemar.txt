@@ -1,0 +1,1 @@
+ sudo dd if=os.img of=/dev/sda bs=512 status=progress
