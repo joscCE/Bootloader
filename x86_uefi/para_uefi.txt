@@ -1,0 +1,60 @@
+
+para el bootloader
+
+clang -target x86_64-pc-win32 \
+  -I/usr/include/efi \
+  -I/usr/include/efi/x86_64 \
+  -ffreestanding -fshort-wchar \
+  -mno-red-zone \
+  -c bootuefi.c -o bootuefi.o
+
+
+lld-link \
+  /subsystem:efi_application \
+  /entry:efi_main \
+  bootuefi.o \
+  /out:BOOTX64.EFI
+
+
+-------------------------------------------------------------
+
+para el juego:
+
+los .efi del boot y del game tiene que estar en la carpeta de esp/EFI/BOOT
+
+clang -target x86_64-pc-win32 \
+  -I/usr/include/efi \
+  -I/usr/include/efi/x86_64 \
+  -ffreestanding -fshort-wchar \
+  -mno-red-zone \
+  -c game.c -o game.o
+
+lld-link \
+  /subsystem:efi_application \
+  /entry:efi_main \
+  game.o \
+  /out:game.efi
+
+-----------------------------------------------------------
+  qemu-system-x86_64 \
+  -bios /usr/share/OVMF/OVMF_CODE.fd \
+  -drive format=raw,file=fat:rw:esp
+
+---------------------------------------------------------
+para quemar la llave malla
+
+lsblk -f //para ver el dev de la llave malla, normalmente sda1
+
+entonces
+
+sudo mount /dev/sda1 /mnt
+
+sudo mkdir -p /mnt/EFI/BOOT
+
+sudo cp /Documents/materias/Sistemas_Operativos/Tareas/Bootloader/esp/EFI/BOOT/BOOTX64.EFI /mnt/EFI/BOOT/
+
+sudo cp /Documents/materias/Sistemas_Operativos/Tareas/Bootloader/esp/EFI/BOOT/game.efi /mnt/EFI/BOOT/
+
+sudo umount /mnt
+
+y listo ya puede usar la llave 
