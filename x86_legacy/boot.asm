@@ -1,5 +1,5 @@
-bits 16
-org 0x7C00
+[bits 16]
+[org 0x7C00]
 
 
 cli
@@ -13,23 +13,20 @@ sti
 mov [BOOT_DRIVE], dl ; BIOS pone el disco en DL
 
 
-
 mov bx, 0x1000       ; donde cargar el programa
-mov dh, 1            ; cuantos sectores leer
 
 mov ah, 0x0E     
-mov al, 'X'      
+mov al, 'D'      
 int 0x10  
 
 
-call disk_load
-
-jmp 0x000:0x1000           ; saltar al game
-
-;-----------------------
 disk_load:
+    xor ax, ax
+    mov es, ax        
+    mov bx, 0x1000
+
     mov ah, 0x02     ; funcion leer sectores
-    mov al, 1       ; cantidad de sectores
+    mov al, 1        ; cantidad de sectores
     mov ch, 0x00     ; cilindro
     mov dh, 0x00     ; cabeza
     mov cl, 0x02     ; sector (1 es bootloader)
@@ -37,7 +34,15 @@ disk_load:
 
     int 0x13
     jc disk_error
-    ret
+
+mov ah, 0x0E     
+mov al, 'P'      
+int 0x10  
+
+
+jmp 0x0000:0x1000
+
+;-----------------------
 
 disk_error:
     mov ah, 0x0E

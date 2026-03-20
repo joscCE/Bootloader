@@ -1,10 +1,24 @@
-bits 16
-org 0x1000
+[bits 16]
+[org 0x1000]
 
 ;==========================
 ; Inicio de programa
 ;==========================
+
+mov ah, 0x0E     
+mov al, 'G'      
+int 0x10  
+
 start:
+    cli
+    xor ax, ax
+    mov ds, ax
+    mov es, ax
+
+    mov ss, ax
+    mov sp, 0x9000   
+    sti
+
     call clear_screen      ; limpiar pantalla
 
     mov dh, 0              ; row 0
